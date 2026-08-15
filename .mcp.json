@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tidewave": {
+      "type": "http",
+      "url": "http://localhost:40404/tidewave/mcp?include_browser_tools=false"
+    }
+  }
+}
