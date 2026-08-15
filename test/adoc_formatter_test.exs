@@ -43,6 +43,13 @@ defmodule AdocFormatterTest do
                "Yahoo! Finance provides the data.\nAnother sentence.\n"
     end
 
+    test "does not match a configured phrase inside a larger word" do
+      source = "These questions are deep. We promise you.\n"
+
+      assert AdocFormatter.format(source, non_breaking_phrases: ["p."]) ==
+               "These questions are deep.\nWe promise you.\n"
+    end
+
     test "does not treat initials as sentence boundaries" do
       source = "* Asness, C. S., & Liew, J. M. (2001). Do hedge funds hedge?.\n"
 
@@ -106,11 +113,32 @@ defmodule AdocFormatterTest do
                "Consider _“Why now?”_ before continuing.\nNext sentence.\n"
     end
 
+    test "does not split terminal punctuation inside a mid-sentence parenthetical" do
+      exclamation =
+        "We will cover this extensively (and you will practice it!) in Chapter 14. Next sentence.\n"
+
+      question =
+        "Markets are noisy (or is it information?) and can overload investors. Next sentence.\n"
+
+      assert AdocFormatter.format(exclamation) ==
+               "We will cover this extensively (and you will practice it!) in Chapter 14.\nNext sentence.\n"
+
+      assert AdocFormatter.format(question) ==
+               "Markets are noisy (or is it information?) and can overload investors.\nNext sentence.\n"
+    end
+
     test "does not split an ellipsis joined to the following word" do
       source = "The quote begins \"...Start here.\" Next sentence.\n"
 
       assert AdocFormatter.format(source) ==
                "The quote begins \"...Start here.\"\nNext sentence.\n"
+    end
+
+    test "does not split after an opening quotation ellipsis" do
+      source = "In his words, \"... In a dynamic landscape, speed wins.\" Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "In his words, \"... In a dynamic landscape, speed wins.\"\nNext sentence.\n"
     end
 
     test "does not split at a non-breaking space" do
