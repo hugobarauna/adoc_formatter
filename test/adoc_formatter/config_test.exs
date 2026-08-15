@@ -21,5 +21,26 @@ defmodule AdocFormatter.ConfigTest do
       assert {:error, message} = Config.load(path)
       assert message =~ "expected a keyword list"
     end
+
+    test "rejects unsupported option keys", %{tmp_dir: directory} do
+      path = Path.join(directory, ".adoc_formatter.exs")
+      File.write!(path, ~S([line_length: 80]))
+
+      assert Config.load(path) == {:error, "formatter config contains unsupported options"}
+    end
+
+    test "rejects phrases that are not strings", %{tmp_dir: directory} do
+      path = Path.join(directory, ".adoc_formatter.exs")
+      File.write!(path, ~S([non_breaking_phrases: [:dr]]))
+
+      assert Config.load(path) == {:error, "non_breaking_phrases must be a list of strings"}
+    end
+
+    test "reports a config file that cannot be loaded", %{tmp_dir: directory} do
+      path = Path.join(directory, "missing.exs")
+
+      assert {:error, message} = Config.load(path)
+      assert message =~ "could not load #{path}"
+    end
   end
 end

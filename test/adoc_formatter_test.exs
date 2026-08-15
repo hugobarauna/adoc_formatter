@@ -179,5 +179,25 @@ defmodule AdocFormatterTest do
 
       assert AdocFormatter.format(source) == "First sentence.\r\nSecond sentence.\r\n"
     end
+
+    test "formats already formatted output unchanged" do
+      sources = [
+        "First sentence. Second sentence.\n",
+        "* First sentence. Second one here.\n* Another item. Its second sentence.\n",
+        "Low:: First sentence. Second sentence.\nHigh:: Another item. Next sentence.\n",
+        "= Title\n\nA claim.footnote:[Detail. More.] Next sentence.\n\n----\ncode. keep.\n----\n",
+        "NOTE: One sentence. Two sentences.\n",
+        "First sentence. Second sentence.\r\n",
+        "No trailing newline. Second sentence.",
+        ~s(He said "Stop."She left quickly. Next sentence.\n),
+        "<1> First sentence. Second sentence.\n<2> Another item. Next sentence.\n"
+      ]
+
+      for source <- sources do
+        formatted = AdocFormatter.format(source)
+
+        assert AdocFormatter.format(formatted) == formatted
+      end
+    end
   end
 end

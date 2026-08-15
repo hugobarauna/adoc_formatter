@@ -85,6 +85,63 @@ defmodule AdocFormatter.CLITest do
       assert {_input, ""} = StringIO.contents(stderr)
     end
 
+    test "lists only the unformatted files and exits 1 with --check", %{tmp_dir: directory} do
+      formatted_path = Path.join(directory, "formatted.adoc")
+      unformatted_path = Path.join(directory, "unformatted.adoc")
+      File.write!(formatted_path, "One sentence only.\n")
+      File.write!(unformatted_path, "First sentence. Second sentence.\n")
+      {:ok, stdout} = StringIO.open("")
+      {:ok, stderr} = StringIO.open("")
+
+      status =
+        CLI.run(["--check", formatted_path, unformatted_path], stdout: stdout, stderr: stderr)
+
+      assert status == 1
+      assert {_input, output} = StringIO.contents(stdout)
+      assert output == "#{unformatted_path}\n"
+      assert {_input, ""} = StringIO.contents(stderr)
+    end
+
+    test "reports an unreadable file", %{tmp_dir: directory} do
+      path = Path.join(directory, "missing.adoc")
+      {:ok, stdout} = StringIO.open("")
+      {:ok, stderr} = StringIO.open("")
+
+      assert CLI.run([path], stdout: stdout, stderr: stderr) == 2
+      assert {_input, output} = StringIO.contents(stderr)
+      assert output == "could not read #{path}: no such file or directory\n"
+    end
+
+    test "rejects an invocation without paths" do
+      {:ok, stderr} = StringIO.open("")
+
+      assert CLI.run([], stderr: stderr) == 2
+      assert {_input, output} = StringIO.contents(stderr)
+      assert output =~ "Usage: adoc_formatter"
+    end
+
+    test "rejects an unknown option", %{tmp_dir: directory} do
+      path = Path.join(directory, "chapter.adoc")
+      File.write!(path, "First sentence. Second sentence.\n")
+      {:ok, stderr} = StringIO.open("")
+
+      assert CLI.run(["--bogus", path], stderr: stderr) == 2
+      assert {_input, output} = StringIO.contents(stderr)
+      assert output =~ "invalid options"
+    end
+
+    test "rejects stdout mode with more than one file", %{tmp_dir: directory} do
+      first_path = Path.join(directory, "first.adoc")
+      second_path = Path.join(directory, "second.adoc")
+      File.write!(first_path, "First sentence. Second sentence.\n")
+      File.write!(second_path, "Third sentence. Fourth sentence.\n")
+      {:ok, stderr} = StringIO.open("")
+
+      assert CLI.run([first_path, second_path], stderr: stderr) == 2
+      assert {_input, output} = StringIO.contents(stderr)
+      assert output =~ "stdout mode expects exactly one input file"
+    end
+
     test "rejects using --write and --check together", %{tmp_dir: directory} do
       path = Path.join(directory, "chapter.adoc")
       File.write!(path, "First sentence. Second sentence.\n")
