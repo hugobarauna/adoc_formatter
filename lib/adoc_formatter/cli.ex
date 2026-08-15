@@ -45,14 +45,7 @@ defmodule AdocFormatter.CLI do
           true ->
             case load_config(options[:config]) do
               {:ok, formatter_options} ->
-                run_paths(
-                  resolve_paths(paths),
-                  options,
-                  formatter_options,
-                  stdin,
-                  stdout,
-                  stderr
-                )
+                run_paths(paths, options, formatter_options, stdin, stdout, stderr)
 
               {:error, message} ->
                 IO.puts(stderr, message)
@@ -66,20 +59,23 @@ defmodule AdocFormatter.CLI do
   end
 
   defp run_paths(paths, options, formatter_options, stdin, stdout, stderr) do
-    cond do
-      paths == [] ->
-        usage_error(stderr, [])
+    {files, unmatched} = resolve_paths(paths)
 
-      options[:write] == true and "-" in paths ->
+    cond do
+      unmatched != [] ->
+        Enum.each(unmatched, &IO.puts(stderr, "no .adoc files found matching #{&1}"))
+        2
+
+      options[:write] == true and "-" in files ->
         IO.puts(stderr, "cannot use --write with stdin")
         2
 
-      options[:write] != true and options[:check] != true and length(paths) != 1 ->
+      options[:write] != true and options[:check] != true and length(files) != 1 ->
         IO.puts(stderr, "stdout mode expects exactly one input file")
         2
 
       true ->
-        paths
+        files
         |> Enum.map(&run_file(&1, options, formatter_options, stdin, stdout, stderr))
         |> Enum.max()
     end
@@ -140,10 +136,16 @@ defmodule AdocFormatter.CLI do
   defp read_source(path, _stdin), do: File.read(path)
 
   defp resolve_paths(paths) do
-    paths
-    |> Enum.flat_map(&resolve_path/1)
-    |> Enum.uniq()
-    |> Enum.sort()
+    resolutions = Enum.map(paths, &{&1, resolve_path(&1)})
+    unmatched = for {path, []} <- resolutions, do: path
+
+    files =
+      resolutions
+      |> Enum.flat_map(fn {_path, files} -> files end)
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    {files, unmatched}
   end
 
   defp resolve_path(path) do

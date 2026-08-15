@@ -45,6 +45,32 @@ defmodule AdocFormatter.CLITest do
       assert {_input, ""} = StringIO.contents(stderr)
     end
 
+    test "reports a directory containing no AsciiDoc files", %{tmp_dir: directory} do
+      File.write!(Path.join(directory, "notes.md"), "Not AsciiDoc. Leave alone.\n")
+      {:ok, stdout} = StringIO.open("")
+      {:ok, stderr} = StringIO.open("")
+
+      assert CLI.run(["--check", directory], stdout: stdout, stderr: stderr) == 2
+      assert {_input, ""} = StringIO.contents(stdout)
+      assert {_input, output} = StringIO.contents(stderr)
+      assert output == "no .adoc files found matching #{directory}\n"
+    end
+
+    test "reports a glob matching nothing without processing the other paths", %{
+      tmp_dir: directory
+    } do
+      path = Path.join(directory, "chapter.adoc")
+      source = "First sentence. Second sentence.\n"
+      File.write!(path, source)
+      {:ok, stderr} = StringIO.open("")
+
+      glob = Path.join(directory, "typo-*.adoc")
+      assert CLI.run(["--write", path, glob], stderr: stderr) == 2
+      assert File.read!(path) == source
+      assert {_input, output} = StringIO.contents(stderr)
+      assert output == "no .adoc files found matching #{glob}\n"
+    end
+
     test "reports an unformatted file without changing it with --check", %{tmp_dir: directory} do
       path = Path.join(directory, "chapter.adoc")
       source = "First sentence. Second sentence.\n"
