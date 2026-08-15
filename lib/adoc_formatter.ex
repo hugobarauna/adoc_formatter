@@ -49,7 +49,25 @@ defmodule AdocFormatter do
         {binary_part(source, offset, size), offset + size}
       end)
 
+    merge_unspaced_boundaries(segments)
+  end
+
+  # A line break renders as a plain space, so a split is only safe where the
+  # source already had one; glue segments back together everywhere else.
+  defp merge_unspaced_boundaries(segments) do
     segments
+    |> Enum.reduce([], fn
+      segment, [] ->
+        [segment]
+
+      segment, [previous | rest] ->
+        if String.ends_with?(previous, [" ", "\t"]) do
+          [segment, previous | rest]
+        else
+          [previous <> segment | rest]
+        end
+    end)
+    |> Enum.reverse()
   end
 
   defp split_trailing_newline(source) do

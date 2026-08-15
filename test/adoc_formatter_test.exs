@@ -148,6 +148,13 @@ defmodule AdocFormatterTest do
                "First sentence.\u00A0_Still attached._\nNext sentence.\n"
     end
 
+    test "does not split at a sentence boundary with no whitespace in the source" do
+      source = ~s(He said "Stop."She left quickly. Next sentence.\n)
+
+      assert AdocFormatter.format(source) ==
+               ~s(He said "Stop."She left quickly.\nNext sentence.\n)
+    end
+
     test "keeps consecutive terminal punctuation together" do
       source = "Is this correct?. Next sentence.\n"
 
