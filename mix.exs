@@ -34,10 +34,13 @@ defmodule AdocFormatter.MixProject do
     ]
   end
 
+  # Port 40404 rather than the usual 4000, so this does not fight with whatever
+  # Phoenix app happens to be running. Override with TIDEWAVE_PORT, but keep
+  # your MCP client config pointed at the same port if you do.
   defp aliases do
     [
       tidewave:
-        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: {Tidewave, toolbar: false}, port: 4000) end)'"
+        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: {Tidewave, toolbar: false}, port: String.to_integer(System.get_env(\"TIDEWAVE_PORT\") || \"40404\")) end)'"
     ]
   end
 end
