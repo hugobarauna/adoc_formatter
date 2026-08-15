@@ -51,7 +51,7 @@ defmodule AdocFormatter.InlineShadow do
   end
 
   defp mask_monospace(source) do
-    Regex.replace(~r/`[^`\r\n]*`/u, source, &mask/1)
+    Regex.replace(~r/``[^\r\n]*?``|`[^`\r\n]*`/u, source, &mask/1)
   end
 
   defp mask_attached_footnotes(source) do

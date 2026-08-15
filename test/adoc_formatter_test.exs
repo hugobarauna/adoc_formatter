@@ -64,6 +64,13 @@ defmodule AdocFormatterTest do
                "Use `first. second?` carefully.\nAnother sentence.\n"
     end
 
+    test "does not split on punctuation inside unconstrained monospace" do
+      source = "Use ``first. Second?`` carefully. Another sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "Use ``first. Second?`` carefully.\nAnother sentence.\n"
+    end
+
     test "does not split on punctuation inside an inline macro" do
       source =
         "Read link:https://example.com[Why now? Learn more.] before continuing. Next sentence.\n"
