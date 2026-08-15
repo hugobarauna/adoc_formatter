@@ -1,0 +1,148 @@
+defmodule AdocFormatterTest do
+  use ExUnit.Case
+
+  describe "format/2" do
+    test "puts each sentence on its own line" do
+      source = "First sentence. Second sentence.\n"
+
+      assert AdocFormatter.format(source) == "First sentence.\nSecond sentence.\n"
+    end
+
+    test "joins an existing soft wrap within a sentence" do
+      source = "A sentence that was\nsoft wrapped. Another sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "A sentence that was soft wrapped.\nAnother sentence.\n"
+    end
+
+    test "preserves blank lines between paragraphs" do
+      source = "First paragraph. Another sentence.\n\nSecond paragraph. Its next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "First paragraph.\nAnother sentence.\n\nSecond paragraph.\nIts next sentence.\n"
+    end
+
+    test "does not format a document title" do
+      source = "= Why now? A practical guide\n\nFirst sentence. Second sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "= Why now? A practical guide\n\nFirst sentence.\nSecond sentence.\n"
+    end
+
+    test "indents later sentences within a list item" do
+      source = "* First sentence. Second sentence.\n* Another item. Its second sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "* First sentence.\n  Second sentence.\n* Another item.\n  Its second sentence.\n"
+    end
+
+    test "keeps configured phrases from creating sentence boundaries" do
+      source = "Yahoo! Finance provides the data. Another sentence.\n"
+
+      assert AdocFormatter.format(source, non_breaking_phrases: ["Yahoo! Finance"]) ==
+               "Yahoo! Finance provides the data.\nAnother sentence.\n"
+    end
+
+    test "does not treat initials as sentence boundaries" do
+      source = "* Asness, C. S., & Liew, J. M. (2001). Do hedge funds hedge?.\n"
+
+      assert AdocFormatter.format(source) ==
+               "* Asness, C. S., & Liew, J. M. (2001).\n  Do hedge funds hedge?.\n"
+    end
+
+    test "does not split on punctuation inside inline monospace" do
+      source = "Use `first. second?` carefully. Another sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "Use `first. second?` carefully.\nAnother sentence.\n"
+    end
+
+    test "does not split on punctuation inside an inline macro" do
+      source =
+        "Read link:https://example.com[Why now? Learn more.] before continuing. Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "Read link:https://example.com[Why now? Learn more.] before continuing.\nNext sentence.\n"
+    end
+
+    test "does not split on punctuation inside a targetless inline macro" do
+      source = "A claim.footnote:[Supporting detail. Another detail.] Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "A claim.footnote:[Supporting detail. Another detail.]\nNext sentence.\n"
+    end
+
+    test "keeps an empty attribute attached to a following footnote" do
+      source = "A claim.{empty}footnote:[Supporting detail. Another detail.] Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "A claim.{empty}footnote:[Supporting detail. Another detail.]\nNext sentence.\n"
+    end
+
+    test "moves an exclamation boundary past an attached footnote" do
+      source = "A claim!{empty}footnote:[Supporting detail.] Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "A claim!{empty}footnote:[Supporting detail.]\nNext sentence.\n"
+    end
+
+    test "preserves soft-wrap whitespace before an empty attribute" do
+      source = "A claim!\n{empty}footnote:[Supporting detail.] Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "A claim! {empty}footnote:[Supporting detail.]\nNext sentence.\n"
+    end
+
+    test "keeps an inline formatting closer with its sentence" do
+      source = "This is *important.* Next sentence.\n"
+
+      assert AdocFormatter.format(source) == "This is *important.*\nNext sentence.\n"
+    end
+
+    test "keeps a formatting closer after a closing quote with its sentence" do
+      source = "Consider _“Why now?”_ before continuing. Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "Consider _“Why now?”_ before continuing.\nNext sentence.\n"
+    end
+
+    test "does not split an ellipsis joined to the following word" do
+      source = "The quote begins \"...Start here.\" Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "The quote begins \"...Start here.\"\nNext sentence.\n"
+    end
+
+    test "does not split at a non-breaking space" do
+      source = "First sentence.\u00A0_Still attached._ Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "First sentence.\u00A0_Still attached._\nNext sentence.\n"
+    end
+
+    test "keeps consecutive terminal punctuation together" do
+      source = "Is this correct?. Next sentence.\n"
+
+      assert AdocFormatter.format(source) == "Is this correct?.\nNext sentence.\n"
+    end
+
+    test "does not split consecutive punctuation before a non-breaking space" do
+      source = "Is this correct?.\u00A0_Still attached._ Next sentence.\n"
+
+      assert AdocFormatter.format(source) ==
+               "Is this correct?.\u00A0_Still attached._\nNext sentence.\n"
+    end
+
+    test "leaves a paragraph with an explicit hard line break unchanged" do
+      source = "First visible line. +\nSecond visible line. Another sentence.\n"
+
+      assert AdocFormatter.format(source) == source
+    end
+
+    test "preserves CRLF line endings" do
+      source = "First sentence. Second sentence.\r\n"
+
+      assert AdocFormatter.format(source) == "First sentence.\r\nSecond sentence.\r\n"
+    end
+  end
+end
