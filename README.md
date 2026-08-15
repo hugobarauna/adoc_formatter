@@ -82,5 +82,10 @@ It changes only paragraph whitespace and deliberately leaves source, listing,
 literal, passthrough, comment, table, and verse content untouched. Paragraphs
 that contain an explicit AsciiDoc hard line break (` +`) are also left as-is.
 
+When sentence detection is ambiguous, the formatter prefers a missed split to
+a wrong one: initials such as `C. S.`, configured phrases, and terminal
+punctuation followed by a lowercase word stay on one line. A missed split
+leaves a line less tidy but never changes the rendered document.
+
 The local formatter is the first deliverable. Repository and CI integration can
 be added later once the workflow is accepted.
