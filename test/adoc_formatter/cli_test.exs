@@ -116,6 +116,27 @@ defmodule AdocFormatter.CLITest do
       assert {_input, ""} = StringIO.contents(stderr)
     end
 
+    test "formats empty stdin as empty output" do
+      {:ok, stdin} = StringIO.open("")
+      {:ok, stdout} = StringIO.open("")
+      {:ok, stderr} = StringIO.open("")
+
+      assert CLI.run(["-"], stdin: stdin, stdout: stdout, stderr: stderr) == 0
+      assert {_input, ""} = StringIO.contents(stdout)
+      assert {_input, ""} = StringIO.contents(stderr)
+    end
+
+    test "reports a stdin read error" do
+      {:ok, stdin} = StringIO.open("First sentence.\n")
+      {:ok, _contents} = StringIO.close(stdin)
+      {:ok, stdout} = StringIO.open("")
+      {:ok, stderr} = StringIO.open("")
+
+      assert CLI.run(["-"], stdin: stdin, stdout: stdout, stderr: stderr) == 2
+      assert {_input, output} = StringIO.contents(stderr)
+      assert output =~ "could not read -"
+    end
+
     test "rejects --write with stdin", %{tmp_dir: directory} do
       {:ok, stdin} = StringIO.open("First sentence. Second sentence.\n")
       {:ok, stderr} = StringIO.open("")

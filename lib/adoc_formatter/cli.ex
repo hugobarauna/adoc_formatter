@@ -129,7 +129,14 @@ defmodule AdocFormatter.CLI do
     2
   end
 
-  defp read_source("-", stdin), do: {:ok, IO.read(stdin, :eof)}
+  defp read_source("-", stdin) do
+    case IO.read(stdin, :eof) do
+      :eof -> {:ok, ""}
+      {:error, reason} -> {:error, reason}
+      data when is_binary(data) -> {:ok, data}
+    end
+  end
+
   defp read_source(path, _stdin), do: File.read(path)
 
   defp resolve_paths(paths) do
