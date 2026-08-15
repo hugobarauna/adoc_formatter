@@ -84,7 +84,7 @@ defmodule AdocFormatter.InlineShadow do
 
   defp suppress_mid_sentence_terminal(source) do
     Regex.replace(
-      ~r/([!?])(["'”’»]*)([)*_#^~]+)(\s+)(?=\p{Ll})/u,
+      ~r/([!?])(["'”’»]*)([)*_#^~]*)(\s+)(?=\p{Ll})/u,
       source,
       fn _match, _terminal, quotes, closers, whitespace ->
         "x" <> quotes <> String.duplicate(")", byte_size(closers)) <> whitespace

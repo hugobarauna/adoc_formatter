@@ -127,6 +127,17 @@ defmodule AdocFormatterTest do
                "Markets are noisy (or is it information?) and can overload investors.\nNext sentence.\n"
     end
 
+    test "does not split a bare mid-sentence terminal before a lowercase word" do
+      exclamation = "It was loud! very loud indeed. Next sentence.\n"
+      question = "Could it work? maybe, with practice. Next sentence.\n"
+
+      assert AdocFormatter.format(exclamation) ==
+               "It was loud! very loud indeed.\nNext sentence.\n"
+
+      assert AdocFormatter.format(question) ==
+               "Could it work? maybe, with practice.\nNext sentence.\n"
+    end
+
     test "does not split an ellipsis joined to the following word" do
       source = "The quote begins \"...Start here.\" Next sentence.\n"
 
